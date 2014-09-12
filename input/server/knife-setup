@@ -1,0 +1,31 @@
+#!EXPECT
+
+set force_conservative 0;
+
+if {$force_conservative} {
+	set send_slow {1 .1}
+	proc send {ignore arg} {
+		sleep .1
+		exp_send -s -- $arg
+	}
+}
+
+set timeout -1
+spawn knife configure --initial
+match_max 100000
+
+expect {
+    -re ".*Overwrite.*" { send -- "y\r"; expect -exact "y\r" }
+    -re ".*config file.*" { send -- "CHEFREPO/.chef/knife.rb\r"; expect -exact "CHEFREPO/.chef/knife.rb\r" }
+}
+
+expect -re "Please enter the chef server URL:.*" { send -- "https://CHEFSERVERHOSTNAME:443\r"; expect -exact "https://CHEFSERVERHOSTNAME:443\r"; }
+expect -re "Please enter a name for the new user:.*" { send -- "CHEFUSER\r"; expect -exact "CHEFUSER\r" }
+expect -re "Please enter the existing admin name:.*" { send -- "admin\r"; expect -exact "admin\r" }
+expect -re "Please enter the location of the existing admin's private key:.*" { send -- "/etc/chef-server/admin.pem\r"; expect -exact "/etc/chef-server/admin.pem\r" }
+expect -re "Please enter the validation clientname:.*" { send -- "chef-validator\r"; expect -exact "chef-validator\r" }
+expect -re "Please enter the location of the validation key:.*" { send -- "/etc/chef-server/chef-validator.pem\r"; expect -exact "/etc/chef-server/chef-validator.pem\r" }
+expect -re "Please enter the path to a chef repository.*" { send -- "CHEFREPO\r"; expect -exact "CHEFREPO\r"; expect -exact "Creating initial API user...\r" }
+expect -re "Please enter a password for the new user: " { send -- "CHEFPASS\r" }
+expect eof
+
